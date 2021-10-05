@@ -18,8 +18,30 @@ app.use(express.static(path.join(__dirname, 'public')))
 var driver = neo4j.driver('neo4j://localhost', neo4j.auth.basic('neo4j', 'neo4j'))
 var session = driver.session();
 
+
 app.get('/', function(req, res){
-    res.send('it works')
+    session
+        .run('MATCH(n:Movie) RETURN n LIMIT 25')
+        .then(function(result){
+            var movieArr = [];
+
+            result.records.forEach(function(record){
+                movieArr = [
+                    ...movieArr,
+                    {
+                        id: record._fields[0].identy.low,
+                        title: record._fields[0].properties.title,
+                        year: record._fields[0].properties.year
+                    }
+                ]
+            })
+            res.render('index', {
+                movies: movieArr
+            })
+        })
+        .catch(function(err){
+            console.log(err)
+        })
 })
 
 app.listen(3000)
